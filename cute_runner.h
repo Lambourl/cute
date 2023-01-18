@@ -30,6 +30,8 @@
 #include <functional>
 #include <iterator>
 #include <set>
+#include <regex>
+
 namespace cute {
 	namespace runner_aux {
 	struct prefixMatcher
@@ -60,28 +62,53 @@ namespace cute {
 	class ArgvTestFilter
 	{
 	    std::set<std::string> match;
-	    bool shouldRunSuite(std::string const &info, std::vector<std::string> const &args)
-	    {
-			std::cout<<"le renard"<<std::endl;
-			for (auto l : args){std::cout<<l<<std::endl;}
-			std::cout<<info<<std::endl;
-	        if(!args.size() || !info.size())
+		std::vector<std::string> args_{};
+		// 
+
+	    bool shouldRunSuite(std::string const &info, std::vector<std::string> const &args,cute::suite const &s)
+	    {	
+			args_ = args;
+	        if(!args.size() || !info.size()){
 	            return true;
+			}
 	        if(args.end() != find_if(args.begin(), args.end(), prefixMatcher(info))){
 	           std::transform(args.begin(), args.end(), std::inserter(match,match.begin()),prefixCutter(info));
 	           match.erase(std::string()); // get rid of empty string
 	           return true;
 	        }
-	        return false;
+
+			bool should_run = false;
+			for (auto arg : args){
+				std::string search_string = std::string(".*") +arg+ std::string(".*");
+				const std::regex regex_search(search_string);
+				for (auto test : s){
+					if(std::regex_match(test.name(), regex_search)){
+						std::transform(args.begin(), args.end(), std::inserter(match,match.begin()),prefixCutter(test.name()));
+						should_run=true;
+					}
+				}
+			}
+	        return should_run;
 	    }
 	public:
 	    bool const shouldrunsuite;
-		ArgvTestFilter(std::string const &info, std::vector<std::string> const &args)
-		:shouldrunsuite(shouldRunSuite(info,args)){}
-	    bool shouldRun(const std::string & name) const
-	    {	std::cout<<"le loup"<<std::endl;
-			std::cout<<name<<std::endl;
-	        return match.empty() || match.count(name);
+
+		ArgvTestFilter(std::string const &info, std::vector<std::string> const &args,cute::suite const &s)
+		:shouldrunsuite(shouldRunSuite(info,args,s)){}
+
+		 bool shouldRun(const std::string & name) const
+	    {	bool should_run = false;
+			for (auto arg : args_){
+				std::string search_string = std::string(".*") +arg+ std::string(".*");
+				const std::regex regex_search(search_string);
+				if(std::regex_match(name, regex_search)){
+					should_run=true;
+					break;
+				}
+			
+			}
+
+	        return match.empty() || should_run || match.count(name) ;
 	    }
 	};
 	} // namespace runner_aux
@@ -103,11 +130,10 @@ namespace cute {
 	    bool operator ()(suite const &s, const char *info = "") const
 	    {
 			
-	    	runner_aux::ArgvTestFilter filter(info,args);
+	    	runner_aux::ArgvTestFilter filter(info,args,s);
 
 	        bool result = true;
 	        if(filter.shouldrunsuite){
-				std::cout<<"dans le filtre if"<<std::endl;
 	            listener.begin(s, info,
 	            		count_if(s.begin(),s.end(),boost_or_tr1::bind(&runner_aux::ArgvTestFilter::shouldRun,filter,boost_or_tr1::bind(&test::name,_1))));
 	            for(suite::const_iterator it = s.begin();it != s.end();++it){
