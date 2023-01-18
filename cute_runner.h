@@ -79,7 +79,8 @@ namespace cute {
 		ArgvTestFilter(std::string const &info, std::vector<std::string> const &args)
 		:shouldrunsuite(shouldRunSuite(info,args)){}
 	    bool shouldRun(const std::string & name) const
-	    {
+	    {	std::cout<<"le loup"<<std::endl;
+			std::cout<<name<<std::endl;
 	        return match.empty() || match.count(name);
 	    }
 	};
@@ -101,10 +102,12 @@ namespace cute {
 
 	    bool operator ()(suite const &s, const char *info = "") const
 	    {
+			
 	    	runner_aux::ArgvTestFilter filter(info,args);
 
 	        bool result = true;
 	        if(filter.shouldrunsuite){
+				std::cout<<"dans le filtre if"<<std::endl;
 	            listener.begin(s, info,
 	            		count_if(s.begin(),s.end(),boost_or_tr1::bind(&runner_aux::ArgvTestFilter::shouldRun,filter,boost_or_tr1::bind(&test::name,_1))));
 	            for(suite::const_iterator it = s.begin();it != s.end();++it){
