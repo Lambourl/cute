@@ -20,10 +20,12 @@
 
 #ifndef CUTE_RUNNER_H_
 #define CUTE_RUNNER_H_
+
 #include "cute_test.h"
 #include "cute_suite.h"
 #include "cute_listener.h"
 #include "cute_determine_traits.h"
+#include <iostream>
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -60,6 +62,9 @@ namespace cute {
 	    std::set<std::string> match;
 	    bool shouldRunSuite(std::string const &info, std::vector<std::string> const &args)
 	    {
+			std::cout<<"le renard"<<std::endl;
+			for (auto l : args){std::cout<<l<<std::endl;}
+			std::cout<<info<<std::endl;
 	        if(!args.size() || !info.size())
 	            return true;
 	        if(args.end() != find_if(args.begin(), args.end(), prefixMatcher(info))){
