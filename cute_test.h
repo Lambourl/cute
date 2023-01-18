@@ -41,7 +41,7 @@ namespace cute {
 		test(std::string sname,VoidFunctor const &t)
 		:name_(sname),theTest(t){}
 
-	public:
+	private:
 		std::string name_;
 		boost_or_tr1::function<void()> theTest;
 	};
